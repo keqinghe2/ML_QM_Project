@@ -314,7 +314,7 @@ def get_initial_guess(guess_type, x, V_external, W, num_electron):
     Generate different types of initial density guesses
     
     Parameters:
-    - guess_type: "zero", "ones", "gaussian", "random", "ml"
+    - guess_type: "zero", "gaussian", "random", "ml"
     - x: grid
     - V_external: external potential
     - W: ML weight matrix (only used for "ml")
@@ -325,10 +325,6 @@ def get_initial_guess(guess_type, x, V_external, W, num_electron):
     if guess_type == "zero":
         # All zeros
         nx = np.zeros_like(x)
-        
-    elif guess_type == "ones":
-        # Uniform density: all ones, then normalized
-        nx = np.ones_like(x)
         
     elif guess_type == "gaussian":
         # Gaussian centered at x=0 with width sigma=1
@@ -365,9 +361,8 @@ def get_initial_guess(guess_type, x, V_external, W, num_electron):
 ###############################################################################
 def compare_potentials(potential_types, num_electron=17, use_ml=True):
     """
-    Compare SCF convergence for different potentials with 5 different initial guesses:
+    Compare SCF convergence for different potentials with 4 different initial guesses:
     - zero: all zeros
-    - ones: uniform density
     - gaussian: Gaussian distribution
     - random: random values
     - ml: Machine learning prediction (trained separately for each potential type)
@@ -384,7 +379,7 @@ def compare_potentials(potential_types, num_electron=17, use_ml=True):
         print("="*70)
     
     # Define the initial guess types to test
-    guess_types = ["zero", "ones", "gaussian", "random", "ml"] if use_ml else ["zero", "ones", "gaussian", "random"]
+    guess_types = ["zero", "gaussian", "random", "ml"] if use_ml else ["zero", "gaussian", "random"]
     
     for pot_type in potential_types:
         print("\n" + "="*70)
@@ -445,8 +440,8 @@ def compare_potentials(potential_types, num_electron=17, use_ml=True):
         
         # Plot convergence comparison for all initial guesses
         plt.figure(figsize=(12, 6))
-        colors = {'zero': 'blue', 'ones': 'green', 'gaussian': 'orange', 'random': 'purple', 'ml': 'red'}
-        markers = {'zero': 'o', 'ones': 's', 'gaussian': '^', 'random': 'v', 'ml': 'D'}
+        colors = {'zero': 'blue', 'gaussian': 'orange', 'random': 'purple', 'ml': 'red'}
+        markers = {'zero': 'o', 'gaussian': '^', 'random': 'v', 'ml': 'D'}
         
         for guess_type in guess_types:
             hist = results[pot_type][guess_type]['history']
@@ -494,8 +489,8 @@ def plot_summary(results):
     
     # Plot 1: Iterations comparison
     x_pos = np.arange(len(pot_types))
-    width = 0.15  # Adjusted for 5 bars
-    colors = {'zero': 'skyblue', 'ones': 'lightgreen', 'gaussian': 'orange', 'random': 'purple', 'ml': 'salmon'}
+    width = 0.2  # Adjusted for 4 bars
+    colors = {'zero': 'skyblue', 'gaussian': 'orange', 'random': 'purple', 'ml': 'salmon'}
     
     for i, gt in enumerate(guess_types):
         offset = (i - len(guess_types)/2 + 0.5) * width
@@ -511,8 +506,8 @@ def plot_summary(results):
     
     # Plot 2: Savings percentage (relative to zero)
     x_pos = np.arange(len(pot_types))
-    width = 0.2  # Adjusted for 4 bars
-    colors_savings = {'ones': 'green', 'gaussian': 'orange', 'random': 'purple', 'ml': 'red'}
+    width = 0.25  # Adjusted for 3 bars
+    colors_savings = {'gaussian': 'orange', 'random': 'purple', 'ml': 'red'}
     
     for i, gt in enumerate([g for g in guess_types if g != 'zero']):
         offset = (i - (len(guess_types)-2)/2 + 0.5) * width
@@ -540,32 +535,29 @@ def plot_summary(results):
     plt.close()
     
     # Print comprehensive table
-    print("\n" + "="*130)
+    print("\n" + "="*110)
     print("COMPREHENSIVE SUMMARY TABLE")
-    print("="*130)
-    print(f"{'Potential':<20} {'Zero':<8} {'Ones':<8} {'Gaussian':<10} {'Random':<8} {'ML':<8} "
-          f"{'Ones vs Zero':<15} {'Gauss vs Zero':<15} {'Random vs Zero':<16} {'ML vs Zero':<15}")
-    print("─"*130)
+    print("="*110)
+    print(f"{'Potential':<20} {'Zero':<8} {'Gaussian':<10} {'Random':<8} {'ML':<8} "
+          f"{'Gauss vs Zero':<15} {'Random vs Zero':<16} {'ML vs Zero':<15}")
+    print("─"*110)
     
     for pot in pot_types:
         zero_i = results[pot]['zero']['iterations']
-        ones_i = results[pot]['ones']['iterations']
         gauss_i = results[pot]['gaussian']['iterations']
         random_i = results[pot]['random']['iterations']
         ml_i = results[pot]['ml']['iterations'] if 'ml' in results[pot] else 0
         
-        ones_sav = (zero_i - ones_i) / zero_i * 100 if zero_i > 0 else 0
         gauss_sav = (zero_i - gauss_i) / zero_i * 100 if zero_i > 0 else 0
         random_sav = (zero_i - random_i) / zero_i * 100 if zero_i > 0 else 0
         ml_sav = (zero_i - ml_i) / zero_i * 100 if zero_i > 0 and ml_i > 0 else 0
         
-        print(f"{pot:<20} {zero_i:<8} {ones_i:<8} {gauss_i:<10} {random_i:<8} {ml_i:<8} "
-              f"{ones_i-zero_i:>5} ({ones_sav:>5.1f}%)  "
+        print(f"{pot:<20} {zero_i:<8} {gauss_i:<10} {random_i:<8} {ml_i:<8} "
               f"{gauss_i-zero_i:>5} ({gauss_sav:>5.1f}%)  "
               f"{random_i-zero_i:>5} ({random_sav:>5.1f}%)   "
               f"{ml_i-zero_i:>5} ({ml_sav:>5.1f}%)")
     
-    print("="*130)
+    print("="*110)
 
 
 ###############################################################################
@@ -586,7 +578,7 @@ if __name__ == "__main__":
     
     print("="*70)
     print("TESTING DIFFERENT POTENTIAL TYPES")
-    print("Comparing 5 initial guesses: zero, ones, gaussian, random, ML")
+    print("Comparing 4 initial guesses: zero, gaussian, random, ML")
     print(f"Number of electrons: {num_electron}")
     print(f"Grid points: {n_grid}")
     print("="*70)
